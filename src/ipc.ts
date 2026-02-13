@@ -8,12 +8,14 @@ import {
   DATA_DIR,
   IPC_POLL_INTERVAL,
   MAIN_GROUP_FOLDER,
+  TELEGRAM_BOT_TOKEN,
   TIMEZONE,
 } from './config.js';
 import { AvailableGroup } from './container-runner.js';
 import { createTask, deleteTask, getTaskById, updateTask } from './db.js';
 import { logger } from './logger.js';
 import { RegisteredGroup } from './types.js';
+import { handleTelegramCommandIpc } from './skills/manage-commands/host.js';
 
 export interface IpcDeps {
   sendMessage: (jid: string, text: string) => Promise<void>;
@@ -378,6 +380,14 @@ export async function processTaskIpc(
       break;
 
     default:
-      logger.warn({ type: data.type }, 'Unknown IPC task type');
+      // Try Telegram command handler
+      const handled = await handleTelegramCommandIpc(
+        data,
+        TELEGRAM_BOT_TOKEN,
+        path.join(DATA_DIR, 'ipc', sourceGroup)
+      );
+      if (!handled) {
+        logger.warn({ type: data.type }, 'Unknown IPC task type');
+      }
   }
 }

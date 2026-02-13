@@ -4,7 +4,6 @@
 set -e
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-cd "$SCRIPT_DIR"
 
 IMAGE_NAME="nanoclaw-agent"
 TAG="${1:-latest}"
@@ -12,8 +11,9 @@ TAG="${1:-latest}"
 echo "Building NanoClaw agent container image..."
 echo "Image: ${IMAGE_NAME}:${TAG}"
 
-# Build with Apple Container
-container build -t "${IMAGE_NAME}:${TAG}" .
+# Build from project root to access .claude/skills/
+cd "$SCRIPT_DIR/.."
+container build -t "${IMAGE_NAME}:${TAG}" -f container/Dockerfile .
 
 echo ""
 echo "Build complete!"

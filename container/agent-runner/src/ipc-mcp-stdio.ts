@@ -10,6 +10,8 @@ import { z } from 'zod';
 import fs from 'fs';
 import path from 'path';
 import { CronExpressionParser } from 'cron-parser';
+// @ts-ignore - Copied during Docker build from .claude/skills/manage-commands/
+import { createTelegramCommandTools } from './skills/manage-commands/agent.js';
 
 const IPC_DIR = '/workspace/ipc';
 const MESSAGES_DIR = path.join(IPC_DIR, 'messages');
@@ -273,6 +275,13 @@ Use available_groups.json to find the JID for a group. The folder name should be
     };
   },
 );
+
+// Register Telegram command management tools
+const telegramTools = createTelegramCommandTools({ groupFolder, isMain });
+for (const toolDef of telegramTools) {
+  const { name, description, parameters, execute } = toolDef as any;
+  server.tool(name, description, parameters, execute);
+}
 
 // Start the stdio transport
 const transport = new StdioServerTransport();

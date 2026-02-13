@@ -379,6 +379,36 @@ export async function processTaskIpc(
       }
       break;
 
+    case 'restart_service':
+      // Only main group can restart the service
+      if (!isMain) {
+        logger.warn(
+          { sourceGroup },
+          'Unauthorized restart_service attempt blocked',
+        );
+        break;
+      }
+      logger.info('Service restart requested via IPC');
+
+      // Write restart flag so we can send confirmation after restart
+      const restartFlagPath = path.join(DATA_DIR, '.restart_requested');
+      const restartFlag = {
+        chatJid: data.chatJid || null,
+        timestamp: new Date().toISOString(),
+      };
+      fs.writeFileSync(restartFlagPath, JSON.stringify(restartFlag));
+
+      // Execute restart script asynchronously
+      const { spawn } = await import('child_process');
+      const restartProc = spawn('npm', ['run', 'restart'], {
+        cwd: DATA_DIR.replace('/data', ''), // Project root
+        detached: true,
+        stdio: 'ignore',
+      });
+      restartProc.unref();
+      logger.info('Restart script spawned, service will restart shortly');
+      break;
+
     default:
       // Try Telegram command handler
       const handled = await handleTelegramCommandIpc(

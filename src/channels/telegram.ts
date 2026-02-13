@@ -50,6 +50,36 @@ export class TelegramChannel implements Channel {
       ctx.reply(`${ASSISTANT_NAME} is online.`);
     });
 
+    this.bot.command('restart', async (ctx) => {
+      const chatJid = `tg:${ctx.chat.id}`;
+      const group = this.opts.registeredGroups()[chatJid];
+
+      // Only allow main group to restart
+      if (!group || group.folder !== 'main') {
+        ctx.reply('Only the main group can restart the service.');
+        return;
+      }
+
+      // Trigger restart via message to the agent
+      if (!ctx.message) return;
+
+      const timestamp = new Date(ctx.message.date * 1000).toISOString();
+      const senderName = ctx.from?.first_name || ctx.from?.username || 'User';
+
+      this.opts.onChatMetadata(chatJid, timestamp);
+      this.opts.onMessage(chatJid, {
+        id: ctx.message.message_id.toString(),
+        chat_jid: chatJid,
+        sender: ctx.from?.id.toString() || '',
+        sender_name: senderName,
+        content: '@' + ASSISTANT_NAME + ' restart',
+        timestamp,
+        is_from_me: false,
+      });
+
+      ctx.reply('🔄 Restarting service...');
+    });
+
     this.bot.on('message:text', async (ctx) => {
       if (ctx.message.text.startsWith('/')) return;
 

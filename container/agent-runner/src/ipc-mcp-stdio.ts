@@ -278,6 +278,33 @@ Use available_groups.json to find the JID for a group. The folder name should be
   },
 );
 
+server.tool(
+  'restart_service',
+  'Restart the NanoClaw service. Only available to main group. Rebuilds container, compiles code, and restarts the service.',
+  {},
+  async () => {
+    if (!isMain) {
+      return {
+        content: [{ type: 'text' as const, text: 'Only the main group can restart the service.' }],
+        isError: true,
+      };
+    }
+
+    const data = {
+      type: 'restart_service',
+      groupFolder,
+      chatJid,
+      timestamp: new Date().toISOString(),
+    };
+
+    writeIpcFile(TASKS_DIR, data);
+
+    return {
+      content: [{ type: 'text' as const, text: 'Service restart initiated. The service will rebuild and restart shortly.' }],
+    };
+  },
+);
+
 // Register Telegram command management tools
 const telegramTools = createTelegramCommandTools({ groupFolder, isMain });
 for (const toolDef of telegramTools) {

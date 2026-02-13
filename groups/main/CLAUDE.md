@@ -55,6 +55,19 @@ Keep messages clean and readable for WhatsApp.
 
 ---
 
+## Restarting the Service
+
+When the user asks you to "restart" or "restart the service", use the `mcp__nanoclaw__restart_service` tool. This will:
+1. Rebuild the container with latest skill changes
+2. Compile TypeScript code
+3. Restart the NanoClaw service
+
+The restart happens asynchronously on the host machine. After the service restarts, it will automatically send a confirmation message back to the user saying "✅ Restart complete! Service is back online and running with the latest changes."
+
+**Telegram Restart Command:** Users can also type `/restart` in Telegram (main group only), which will trigger the same restart process and confirmation.
+
+---
+
 ## Managing Telegram Bot Commands
 
 **IMPORTANT**: Whenever you create or remove a skill, you MUST update the Telegram bot's slash commands to match.

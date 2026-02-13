@@ -390,13 +390,13 @@ export async function processTaskIpc(
       }
       logger.info('Service restart requested via IPC');
 
-      // Write restart flag so we can send confirmation after restart
-      const restartFlagPath = path.join(DATA_DIR, '.restart_requested');
+      // Write restart flag to database so we can send confirmation after restart
+      const { setRouterState } = await import('./db.js');
       const restartFlag = {
         chatJid: data.chatJid || null,
         timestamp: new Date().toISOString(),
       };
-      fs.writeFileSync(restartFlagPath, JSON.stringify(restartFlag));
+      setRouterState('restart_pending', JSON.stringify(restartFlag));
 
       // Execute restart script asynchronously
       const { spawn } = await import('child_process');

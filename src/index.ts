@@ -376,6 +376,8 @@ async function startMessageLoop(): Promise<void> {
           const formatted = formatMessages(messagesToSend);
 
           if (queue.sendMessage(chatJid, formatted)) {
+            const channel = findChannel(channels, chatJid);
+            if (channel?.setTyping) await channel.setTyping(chatJid, true);
             logger.debug(
               { chatJid, count: messagesToSend.length },
               'Piped messages to active container',
@@ -492,20 +494,20 @@ async function main(): Promise<void> {
   loadState();
 
   // Check if we just restarted and need to send confirmation
-  const restartFlagPath = path.join(DATA_DIR, '.restart_requested');
   let restartConfirmationNeeded = false;
   let restartRequestedBy: string | null = null;
 
-  if (fs.existsSync(restartFlagPath)) {
+  const restartPending = getRouterState('restart_pending');
+  if (restartPending) {
     try {
-      const flagData = JSON.parse(fs.readFileSync(restartFlagPath, 'utf-8'));
+      const flagData = JSON.parse(restartPending);
       restartConfirmationNeeded = true;
       restartRequestedBy = flagData.chatJid || null;
-      fs.unlinkSync(restartFlagPath);
-      logger.info('Restart flag detected, will send confirmation');
+      setRouterState('restart_pending', ''); // Clear the flag
+      logger.info('Restart flag detected in database, will send confirmation');
     } catch (err) {
-      logger.warn({ err }, 'Failed to read restart flag');
-      fs.unlinkSync(restartFlagPath);
+      logger.warn({ err }, 'Failed to parse restart flag from database');
+      setRouterState('restart_pending', ''); // Clear invalid data
     }
   }
 
@@ -579,7 +581,10 @@ async function main(): Promise<void> {
       if (channel) {
         const message = `${ASSISTANT_NAME}: ✅ Restart complete! Service is back online and running with the latest changes.`;
         await channel.sendMessage(restartRequestedBy!, message);
-        logger.info({ chatJid: restartRequestedBy }, 'Sent restart confirmation');
+        logger.info(
+          { chatJid: restartRequestedBy },
+          'Sent restart confirmation',
+        );
       }
     }, 2000); // Wait 2 seconds for everything to settle
   }

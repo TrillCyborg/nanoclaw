@@ -46,6 +46,7 @@ COPY container/agent-runner/ ./
 
 # Copy skill MCP tools
 COPY .claude/skills/manage-commands/agent.ts ./src/skills/manage-commands/
+COPY .claude/skills/weather/agent.ts ./src/skills/weather/
 
 # Build TypeScript
 RUN npm run build
